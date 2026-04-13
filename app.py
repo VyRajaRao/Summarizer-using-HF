@@ -1,12 +1,12 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from transformers import T5ForConditionalGeneration, T5Tokenizer
-import torch
 import re
+import requests
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Text Summarizer API")
 
+# Enable CORS (for Vercel frontend)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,42 +15,43 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load model (relative path)
-model = T5ForConditionalGeneration.from_pretrained("t5-small")
-tokenizer = T5Tokenizer.from_pretrained("t5-small")
+# Hugging Face API setup
+API_URL = "https://api-inference.huggingface.co/models/t5-small"
+headers = {
+    "Authorization": "Bearer YOUR_HF_API_KEY"   # 🔴 Replace this
+}
 
-# Device
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
-
+# Input schema
 class DialogueInput(BaseModel):
     dialogue: str
 
+# Clean text
 def clean_data(text):
     text = re.sub(r"\s+", " ", text)
     return text.strip().lower()
 
+# Summarization using API
 def summarize_dialogue(dialogue: str) -> str:
     dialogue = clean_data(dialogue)
 
-    input_text = "summarize: " + dialogue
+    payload = {
+        "inputs": "summarize: " + dialogue,
+        "parameters": {
+            "max_length": 150,
+            "min_length": 30
+        }
+    }
 
-    inputs = tokenizer(
-        input_text,
-        return_tensors="pt",
-        max_length=512,
-        truncation=True
-    ).to(device)
+    response = requests.post(API_URL, headers=headers, json=payload)
+    result = response.json()
 
-    summary_ids = model.generate(
-        inputs["input_ids"],
-        max_length=150,
-        num_beams=4,
-        early_stopping=True
-    )
+    # Handle errors safely
+    if isinstance(result, dict) and "error" in result:
+        return "Error: " + result["error"]
 
-    return tokenizer.decode(summary_ids[0], skip_special_tokens=True)
+    return result[0]["summary_text"]
 
+# Routes
 @app.get("/")
 def home():
     return {"message": "API is running"}
