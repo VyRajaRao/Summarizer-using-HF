@@ -110,7 +110,7 @@
 
             try {
                 //Send dialogue to backend
-                const response = await fetch("https://web-production-66955.up.railway.app/summarize", {
+                const response = await fetch("/summarize", {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({ dialogue }),
