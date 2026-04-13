@@ -18,7 +18,7 @@ app.add_middleware(
 # Hugging Face API setup
 API_URL = "https://api-inference.huggingface.co/models/t5-small"
 headers = {
-    "Authorization": "Bearer YOUR_HF_API_KEY"   # 🔴 Replace this
+    "Authorization": "Bearer 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"
 }
 
 # Input schema
