@@ -1,16 +1,6 @@
 {
-  "builds": [
-    {
-      "src": "summarize.py",
-      "use": "@vercel/python"
-    },
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    }
-  ],
   "routes": [
     { "src": "/summarize", "dest": "summarize.py" },
-    { "src": "/(.*)", "dest": "index.html" }
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
