@@ -1,19 +1,15 @@
-from http.server import BaseHTTPRequestHandler
 import json
 import requests
 
 API_URL = "https://api-inference.huggingface.co/models/t5-small"
 headers = {
-    "Authorization": "Bearerhf_blqeMAbuszfbnAfsDNPiDeHHSUgFEMeoLU"
+    "Authorization": "Bearer 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"
 }
 
-class handler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        content_length = int(self.headers['Content-Length'])
-        body = self.rfile.read(content_length)
-        data = json.loads(body)
-
-        dialogue = data.get("dialogue", "")
+def handler(request):
+    try:
+        body = request.get_json()
+        dialogue = body.get("dialogue", "")
 
         payload = {
             "inputs": "summarize: " + dialogue,
@@ -25,8 +21,14 @@ class handler(BaseHTTPRequestHandler):
 
         summary = result[0]["summary_text"]
 
-        self.send_response(200)
-        self.send_header("Content-type", "application/json")
-        self.end_headers()
+        return {
+            "statusCode": 200,
+            "headers": {"Content-Type": "application/json"},
+            "body": json.dumps({"summary": summary})
+        }
 
-        self.wfile.write(json.dumps({"summary": summary}).encode())
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": str(e)})
+        }
