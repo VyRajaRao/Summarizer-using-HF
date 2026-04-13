@@ -1,34 +1,27 @@
-import json
+from fastapi import FastAPI
+from pydantic import BaseModel
 import requests
 
+app = FastAPI()
+
 API_URL = "https://api-inference.huggingface.co/models/t5-small"
-headers = {
-    "Authorization": "Bearer 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"
-}
+headers = {"Authorization": "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"}
 
-def handler(request):
-    try:
-        body = request.get_json()
-        dialogue = body.get("dialogue", "")
+class DialogueInput(BaseModel):
+    dialogue: str
 
-        payload = {
-            "inputs": "summarize: " + dialogue,
-            "parameters": {"max_length": 150, "min_length": 30}
-        }
+@app.get("/")
+def home():
+    return {"message": "API running"}
 
-        response = requests.post(API_URL, headers=headers, json=payload)
-        result = response.json()
+@app.post("/summarize")
+def summarize(data: DialogueInput):
+    payload = {
+        "inputs": "summarize: " + data.dialogue,
+        "parameters": {"max_length": 150}
+    }
 
-        summary = result[0]["summary_text"]
+    response = requests.post(API_URL, headers=headers, json=payload)
+    result = response.json()
 
-        return {
-            "statusCode": 200,
-            "headers": {"Content-Type": "application/json"},
-            "body": json.dumps({"summary": summary})
-        }
-
-    except Exception as e:
-        return {
-            "statusCode": 500,
-            "body": json.dumps({"error": str(e)})
-        }
+    return {"summary": result[0]["summary_text"]}
